@@ -134,7 +134,7 @@ elif mode == "2. Lỗ hổng Tái sử dụng k":
     col_a, col_b = st.columns(2)
     with col_a:
         msg1 = st.text_input("Thông điệp 1:", "Anh gửi Chanh 100k VND")
-        msg2 = st.text_input("Thông điệp 2:", "Alice gửi Danh 200k VND")
+        msg2 = st.text_input("Thông điệp 2:", "Anh gửi Danh 200k VND")
         bad_k = 998877665544 # Dùng chung k
         
         if st.button("Ký 2 giao dịch với cùng k"):
