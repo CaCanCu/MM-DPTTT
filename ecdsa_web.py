@@ -113,8 +113,8 @@ alice_Q = scalar_mult(st.session_state.alice_d, G)
 st.sidebar.header(" Cấu hình")
 mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:", 
                         ["1. Mô phỏng ECDSA chuẩn", 
-                         "2. Lỗ hổng Tái sử dụng k", 
-                         "3. Tấn công khi Lộ k (Weak k)",
+                         "2. Tấn công khi Lộ k (Weak k)", 
+                         "3. Lỗ hổng Tái sử dụng k",
                          "4. Giải pháp An toàn (RFC 6979)"])
 
 st.sidebar.markdown("---")
@@ -149,9 +149,35 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
                 st.error("Xác minh thất bại!")
 
 # ---------------------------------------------------------
-# KỊCH BẢN 2: TÁI SỬ DỤNG K
+# KỊCH BẢN 2: LỘ K HOẶC K YẾU
 # ---------------------------------------------------------
-elif mode == "2. Lỗ hổng Tái sử dụng k":
+elif mode == "2. Tấn công khi Lộ k (Weak k)":
+    st.subheader("Kịch bản 3: Tấn công khi lộ k (Nonce Exposure)")
+    st.markdown("""
+    Nếu giá trị $k$ bị lộ (do bộ sinh số ngẫu nhiên yếu hoặc bị rò rỉ bộ nhớ), 
+    Khóa bí mật $d$ sẽ bị tính toán ra ngay lập tức chỉ với **1 thông điệp duy nhất**.
+    """)
+    
+    msg = st.text_input("Thông điệp ký:", "Giao dịch bí mật")
+    weak_k = st.number_input("Giả sử k bị lộ là:", value=12345)
+    
+    if st.button("Mô phỏng lộ k"):
+        z, r, s = sign_ecdsa(msg, st.session_state.alice_d, weak_k)
+        st.write(f"Chữ ký công khai: r=`{hex(r)[:10]}...`, s=`{hex(s)[:10]}...`")
+        
+        st.divider()
+        st.write("**Hacker tính toán:**")
+        st.latex(r"d \equiv r^{-1}(s \cdot k - z) \pmod n")
+        d_hacked = hack_leaked_k(z, r, s, weak_k)
+        
+        st.warning(f"Khóa bí mật bị hacker chiếm đoạt: {d_hacked}")
+        if d_hacked == st.session_state.alice_d:
+            st.error("TẤN CÔNG THÀNH CÔNG!")
+
+# ---------------------------------------------------------
+# KỊCH BẢN 3: TÁI SỬ DỤNG K
+# ---------------------------------------------------------
+elif mode == "3. Lỗ hổng Tái sử dụng k":
     st.subheader("Kịch bản 2: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
     st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
     
@@ -178,32 +204,6 @@ elif mode == "2. Lỗ hổng Tái sử dụng k":
                 st.success(f"Tìm lại được d: `{d_h}`")
                 if d_h == st.session_state.alice_d:
                     st.balloons()
-
-# ---------------------------------------------------------
-# KỊCH BẢN 3: LỘ K HOẶC K YẾU
-# ---------------------------------------------------------
-elif mode == "3. Tấn công khi Lộ k (Weak k)":
-    st.subheader("Kịch bản 3: Tấn công khi lộ k (Nonce Exposure)")
-    st.markdown("""
-    Nếu giá trị $k$ bị lộ (do bộ sinh số ngẫu nhiên yếu hoặc bị rò rỉ bộ nhớ), 
-    Khóa bí mật $d$ sẽ bị tính toán ra ngay lập tức chỉ với **1 thông điệp duy nhất**.
-    """)
-    
-    msg = st.text_input("Thông điệp ký:", "Giao dịch bí mật")
-    weak_k = st.number_input("Giả sử k bị lộ là:", value=12345)
-    
-    if st.button("Mô phỏng lộ k"):
-        z, r, s = sign_ecdsa(msg, st.session_state.alice_d, weak_k)
-        st.write(f"Chữ ký công khai: r=`{hex(r)[:10]}...`, s=`{hex(s)[:10]}...`")
-        
-        st.divider()
-        st.write("**Hacker tính toán:**")
-        st.latex(r"d \equiv r^{-1}(s \cdot k - z) \pmod n")
-        d_hacked = hack_leaked_k(z, r, s, weak_k)
-        
-        st.warning(f"Khóa bí mật bị hacker chiếm đoạt: {d_hacked}")
-        if d_hacked == st.session_state.alice_d:
-            st.error("TẤN CÔNG THÀNH CÔNG!")
 
 # ---------------------------------------------------------
 # KỊCH BẢN 4: RFC 6979
