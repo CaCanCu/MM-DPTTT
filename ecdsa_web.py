@@ -79,8 +79,8 @@ def hack_leaked_k(z, r, s, k_leaked):
 # ==========================================
 # 4. GIAO DIỆN WEB STREAMLIT
 # ==========================================
-st.set_page_config(page_title="ECDSA Simulator Pro", page_icon="🔐", layout="wide")
-st.title("🔐 Hệ thống Phân tích An toàn Chữ ký số ECDSA")
+st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
+st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
 #if 'alice_d' not in st.session_state:
     #st.session_state.alice_d = random.randint(1, N - 1)
@@ -88,7 +88,7 @@ st.title("🔐 Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
 # --- ĐOẠN CODE MỚI THÊM VÀO ---
 st.sidebar.markdown("---")
-st.sidebar.subheader("🔑 Tùy chỉnh Khóa bí mật")
+st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
 # Tạo ô nhập liệu cho d (dùng text_input để hỗ trợ số cực lớn)
 user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="12345")
 
@@ -110,7 +110,7 @@ except ValueError:
 alice_Q = scalar_mult(st.session_state.alice_d, G)
 # ------------------------------
 
-st.sidebar.header("⚙️ Cấu hình")
+st.sidebar.header(" Cấu hình")
 mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:", 
                         ["1. Mô phỏng ECDSA chuẩn", 
                          "2. Lỗ hổng Tái sử dụng k", 
@@ -125,7 +125,7 @@ st.sidebar.code(f"{hex(alice_Q[0])[:20]}...")
 # KỊCH BẢN 1: ECDSA CHUẨN
 # ---------------------------------------------------------
 if mode == "1. Mô phỏng ECDSA chuẩn":
-    st.subheader("✅ Kịch bản 1: Hoạt động ECDSA tiêu chuẩn")
+    st.subheader("Kịch bản 1: Hoạt động ECDSA tiêu chuẩn")
     st.info("Trong kịch bản này, mỗi thông điệp được ký với một số ngẫu nhiên k khác nhau.")
     
     msg = st.text_input("Nhập thông điệp cần ký:", "Giao dịch hợp lệ 100k VND")
@@ -152,7 +152,7 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
 # KỊCH BẢN 2: TÁI SỬ DỤNG K
 # ---------------------------------------------------------
 elif mode == "2. Lỗ hổng Tái sử dụng k":
-    st.subheader("🚨 Kịch bản 2: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
+    st.subheader("Kịch bản 2: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
     st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
     
     col_a, col_b = st.columns(2)
@@ -183,7 +183,7 @@ elif mode == "2. Lỗ hổng Tái sử dụng k":
 # KỊCH BẢN 3: LỘ K HOẶC K YẾU
 # ---------------------------------------------------------
 elif mode == "3. Tấn công khi Lộ k (Weak k)":
-    st.subheader("🔓 Kịch bản 3: Tấn công khi lộ k (Nonce Exposure)")
+    st.subheader("Kịch bản 3: Tấn công khi lộ k (Nonce Exposure)")
     st.markdown("""
     Nếu giá trị $k$ bị lộ (do bộ sinh số ngẫu nhiên yếu hoặc bị rò rỉ bộ nhớ), 
     Khóa bí mật $d$ sẽ bị tính toán ra ngay lập tức chỉ với **1 thông điệp duy nhất**.
@@ -209,7 +209,7 @@ elif mode == "3. Tấn công khi Lộ k (Weak k)":
 # KỊCH BẢN 4: RFC 6979
 # ---------------------------------------------------------
 elif mode == "4. Giải pháp An toàn (RFC 6979)":
-    st.subheader("🛡️ Kịch bản 4: Chữ ký số tất định (RFC 6979)")
+    st.subheader("Kịch bản 4: Chữ ký số tất định (RFC 6979)")
     st.info("Giá trị k được sinh ra từ HMAC(d, z), đảm bảo k luôn duy nhất và bí mật.")
     
     msg = st.text_input("Nhập nội dung:", "Dữ liệu an toàn")
