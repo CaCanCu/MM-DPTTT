@@ -104,7 +104,7 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
     st.subheader("✅ Kịch bản 1: Hoạt động ECDSA tiêu chuẩn")
     st.info("Trong kịch bản này, mỗi thông điệp được ký với một số ngẫu nhiên k khác nhau.")
     
-    msg = st.text_input("Nhập thông điệp cần ký:", "Giao dịch hợp lệ 100 USD")
+    msg = st.text_input("Nhập thông điệp cần ký:", "Giao dịch hợp lệ 100k VND")
     if st.button("Thực hiện Ký và Xác minh"):
         k = random.randint(1, N - 1)
         z, r, s = sign_ecdsa(msg, st.session_state.alice_d, k)
@@ -133,8 +133,8 @@ elif mode == "2. Lỗ hổng Tái sử dụng k":
     
     col_a, col_b = st.columns(2)
     with col_a:
-        msg1 = st.text_input("Thông điệp 1:", "Alice gửi Bob 1 BTC")
-        msg2 = st.text_input("Thông điệp 2:", "Alice gửi Charlie 2 BTC")
+        msg1 = st.text_input("Thông điệp 1:", "Anh gửi Chanh 100k VND")
+        msg2 = st.text_input("Thông điệp 2:", "Alice gửi Danh 200k VND")
         bad_k = 998877665544 # Dùng chung k
         
         if st.button("Ký 2 giao dịch với cùng k"):
