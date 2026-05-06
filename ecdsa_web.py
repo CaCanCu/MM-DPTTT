@@ -114,8 +114,8 @@ st.sidebar.header(" Cấu hình")
 mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:", 
                         ["1. Mô phỏng ECDSA chuẩn", 
                          "2. Tấn công khi Lộ k", 
-                         "3. Tấn công Khóa bí mật yếu (Weak PRNG)",
-                         "4. Lỗ hổng Tái sử dụng k",
+                         "3. Lỗ hổng Tái sử dụng k",
+                         "4. Tấn công d yếu (Weak PRNG)",
                          "5. Giải pháp An toàn (RFC 6979)"])
 
 st.sidebar.markdown("---")
@@ -174,11 +174,42 @@ elif mode == "2. Tấn công khi Lộ k":
         st.warning(f"Khóa bí mật bị hacker chiếm đoạt: {d_hacked}")
         if d_hacked == st.session_state.alice_d:
             st.error("TẤN CÔNG THÀNH CÔNG!")
+
 # ---------------------------------------------------------
-# KỊCH BẢN 3: KHÓA BÍ MẬT YẾU (WEAK PRNG)
+# KỊCH BẢN 3: TÁI SỬ DỤNG K
 # ---------------------------------------------------------
-elif mode == "3. Tấn công Khóa bí mật yếu (Weak PRNG)":
-    st.subheader("Kịch bản 3: Tấn công vét cạn do sinh khóa yếu")
+elif mode == "3. Lỗ hổng Tái sử dụng k":
+    st.subheader("Kịch bản 3: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
+    st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        msg1 = st.text_input("Thông điệp 1:", "Anh gửi Chanh 100k VND")
+        msg2 = st.text_input("Thông điệp 2:", "Anh gửi Danh 200k VND")
+        bad_k = 998877665544 # Dùng chung k
+        
+        if st.button("Ký 2 giao dịch với cùng k"):
+            z1, r1, s1 = sign_ecdsa(msg1, st.session_state.alice_d, bad_k)
+            z2, r2, s2 = sign_ecdsa(msg2, st.session_state.alice_d, bad_k)
+            st.session_state.reuse_data = (z1, z2, r1, s1, s2)
+            st.write(f"Giá trị r dùng chung: `{r1}`")
+
+    with col_b:
+        if 'reuse_data' in st.session_state:
+            st.write("**Hacker thực thi:**")
+            if st.button("Khôi phục Khóa bí mật"):
+                z1, z2, r, s1, s2 = st.session_state.reuse_data
+                k_h, d_h = hack_k_reuse(z1, z2, r, s1, s2)
+                st.latex(r"k = (z_1 - z_2)(s_1 - s_2)^{-1} \pmod n")
+                st.success(f"Tìm lại được k: `{k_h}`")
+                st.success(f"Tìm lại được d: `{d_h}`")
+                if d_h == st.session_state.alice_d:
+                    st.balloons()
+# ---------------------------------------------------------
+# KỊCH BẢN 4: KHÓA BÍ MẬT YẾU (WEAK PRNG)
+# ---------------------------------------------------------
+elif mode == "4. Tấn công d (Weak PRNG)":
+    st.subheader("Kịch bản 4: Tấn công vét cạn do sinh khóa yếu")
     st.info("Mô phỏng việc phần mềm ví sử dụng bộ sinh số giả ngẫu nhiên yếu kém (lấy một mã PIN 4 số làm mầm/seed) để tạo Khóa bí mật.")
     
     col_a, col_b = st.columns(2)
@@ -244,37 +275,6 @@ elif mode == "3. Tấn công Khóa bí mật yếu (Weak PRNG)":
                     st.error("Không tìm thấy! Không gian mẫu có thể lớn hơn dự kiến.")
 
 # ---------------------------------------------------------
-# KỊCH BẢN 4: TÁI SỬ DỤNG K
-# ---------------------------------------------------------
-elif mode == "4. Lỗ hổng Tái sử dụng k":
-    st.subheader("Kịch bản 4: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
-    st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        msg1 = st.text_input("Thông điệp 1:", "Anh gửi Chanh 100k VND")
-        msg2 = st.text_input("Thông điệp 2:", "Anh gửi Danh 200k VND")
-        bad_k = 998877665544 # Dùng chung k
-        
-        if st.button("Ký 2 giao dịch với cùng k"):
-            z1, r1, s1 = sign_ecdsa(msg1, st.session_state.alice_d, bad_k)
-            z2, r2, s2 = sign_ecdsa(msg2, st.session_state.alice_d, bad_k)
-            st.session_state.reuse_data = (z1, z2, r1, s1, s2)
-            st.write(f"Giá trị r dùng chung: `{r1}`")
-
-    with col_b:
-        if 'reuse_data' in st.session_state:
-            st.write("**Hacker thực thi:**")
-            if st.button("Khôi phục Khóa bí mật"):
-                z1, z2, r, s1, s2 = st.session_state.reuse_data
-                k_h, d_h = hack_k_reuse(z1, z2, r, s1, s2)
-                st.latex(r"k = (z_1 - z_2)(s_1 - s_2)^{-1} \pmod n")
-                st.success(f"Tìm lại được k: `{k_h}`")
-                st.success(f"Tìm lại được d: `{d_h}`")
-                if d_h == st.session_state.alice_d:
-                    st.balloons()
-
-# ---------------------------------------------------------
 # KỊCH BẢN 5: RFC 6979
 # ---------------------------------------------------------
 elif mode == "5. Giải pháp An toàn (RFC 6979)":
@@ -292,4 +292,6 @@ elif mode == "5. Giải pháp An toàn (RFC 6979)":
         st.success(f"k được tạo ra một cách an toàn: `{hex(k_rfc)[:20]}...`")
         st.write(f"Chữ ký r: `{r}`")
         st.write("Vì k thay đổi theo mã băm của mỗi thông điệp, hacker không thể áp dụng các kịch bản tấn công trên.")
+
+
 
