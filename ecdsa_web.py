@@ -115,7 +115,7 @@ mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:",
                         ["1. Mô phỏng ECDSA chuẩn", 
                          "2. Tấn công khi Lộ k", 
                          "3. Lỗ hổng Tái sử dụng k",
-                         "4. Tấn công d yếu (Weak PRNG)",
+                         "4. Sinh d yếu (Weak PRNG)",
                          "5. Giải pháp An toàn (RFC 6979)"])
 
 st.sidebar.markdown("---")
@@ -208,7 +208,7 @@ elif mode == "3. Lỗ hổng Tái sử dụng k":
 # ---------------------------------------------------------
 # KỊCH BẢN 4: KHÓA BÍ MẬT YẾU (WEAK PRNG)
 # ---------------------------------------------------------
-elif mode == "4. Tấn công d (Weak PRNG)":
+elif mode == "4. Sinh d yếu (Weak PRNG)":
     st.subheader("Kịch bản 4: Tấn công vét cạn do sinh khóa yếu")
     st.info("Mô phỏng việc phần mềm ví sử dụng bộ sinh số giả ngẫu nhiên yếu kém (lấy một mã PIN 4 số làm mầm/seed) để tạo Khóa bí mật.")
     
