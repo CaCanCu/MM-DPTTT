@@ -113,10 +113,10 @@ alice_Q = scalar_mult(st.session_state.alice_d, G)
 st.sidebar.header(" Cấu hình")
 mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:", 
                         ["1. Mô phỏng ECDSA chuẩn", 
-                         "2. Tấn công khi Lộ k (Weak k)", 
-                         "3. Lỗ hổng Tái sử dụng k",
-                         "4. Giải pháp An toàn (RFC 6979)",
-                         "5. Tấn công Khóa bí mật yếu (Weak PRNG)"])
+                         "2. Tấn công khi Lộ k", 
+                         "3. Tấn công Khóa bí mật yếu (Weak PRNG)",
+                         "4. Lỗ hổng Tái sử dụng k",
+                         "5. Giải pháp An toàn (RFC 6979)"])
 
 st.sidebar.markdown("---")
 st.sidebar.write("**Khóa công khai (Q = dG):**")
@@ -152,8 +152,8 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
 # ---------------------------------------------------------
 # KỊCH BẢN 2: LỘ K
 # ---------------------------------------------------------
-elif mode == "2. Tấn công khi Lộ k ":
-    st.subheader("Kịch bản 2: Tấn công khi lộ k (Nonce Exposure)")
+elif mode == "2. Tấn công khi Lộ k":
+    st.subheader("Kịch bản 2: Tấn công khi lộ k")
     st.markdown("""
     Nếu giá trị $k$ bị lộ (do bộ sinh số ngẫu nhiên yếu hoặc bị rò rỉ bộ nhớ), 
     Khóa bí mật $d$ sẽ bị tính toán ra ngay lập tức chỉ với **1 thông điệp duy nhất**.
