@@ -115,7 +115,8 @@ mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:",
                         ["1. Mô phỏng ECDSA chuẩn", 
                          "2. Tấn công khi Lộ k (Weak k)", 
                          "3. Lỗ hổng Tái sử dụng k",
-                         "4. Giải pháp An toàn (RFC 6979)"])
+                         "4. Giải pháp An toàn (RFC 6979)",
+                         "5. Tấn công Khóa bí mật yếu (Weak PRNG)"])
 
 st.sidebar.markdown("---")
 st.sidebar.write("**Khóa công khai (Q = dG):**")
@@ -149,10 +150,10 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
                 st.error("Xác minh thất bại!")
 
 # ---------------------------------------------------------
-# KỊCH BẢN 2: LỘ K HOẶC K YẾU
+# KỊCH BẢN 2: LỘ K
 # ---------------------------------------------------------
-elif mode == "2. Tấn công khi Lộ k (Weak k)":
-    st.subheader("Kịch bản 3: Tấn công khi lộ k (Nonce Exposure)")
+elif mode == "2. Tấn công khi Lộ k ":
+    st.subheader("Kịch bản 2: Tấn công khi lộ k (Nonce Exposure)")
     st.markdown("""
     Nếu giá trị $k$ bị lộ (do bộ sinh số ngẫu nhiên yếu hoặc bị rò rỉ bộ nhớ), 
     Khóa bí mật $d$ sẽ bị tính toán ra ngay lập tức chỉ với **1 thông điệp duy nhất**.
@@ -173,12 +174,80 @@ elif mode == "2. Tấn công khi Lộ k (Weak k)":
         st.warning(f"Khóa bí mật bị hacker chiếm đoạt: {d_hacked}")
         if d_hacked == st.session_state.alice_d:
             st.error("TẤN CÔNG THÀNH CÔNG!")
+# ---------------------------------------------------------
+# KỊCH BẢN 3: KHÓA BÍ MẬT YẾU (WEAK PRNG)
+# ---------------------------------------------------------
+elif mode == "3. Tấn công Khóa bí mật yếu (Weak PRNG)":
+    st.subheader("Kịch bản 3: Tấn công vét cạn do sinh khóa yếu")
+    st.info("Mô phỏng việc phần mềm ví sử dụng bộ sinh số giả ngẫu nhiên yếu kém (lấy một mã PIN 4 số làm mầm/seed) để tạo Khóa bí mật.")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("**Nạn nhân tạo ví:**")
+        user_pin = st.number_input("Nhập mã PIN 4 số (1000 - 9999) làm mầm sinh khóa:", min_value=1000, max_value=9999, value=2026)
+        if st.button("Tạo ví với Weak PRNG"):
+            # Dùng PIN làm hạt giống (seed) để sinh khóa
+            random.seed(user_pin)
+            d_weak = random.randint(1, N - 1)
+            Q_weak = scalar_mult(d_weak, G)
+            
+            # Reset lại seed hệ thống để không ảnh hưởng các chức năng khác
+            random.seed()
+            
+            st.session_state.weak_wallet = (d_weak, Q_weak)
+            st.success("Tạo ví thành công!")
+            st.write(f"Khóa công khai Q (công bố):")
+            st.code(f"x: {hex(Q_weak[0])[:20]}...\ny: {hex(Q_weak[1])[:20]}...")
+            st.write("Khóa bí mật d: `Đã được giữ kín, chỉ lưu trên máy`")
+    
+    with col_b:
+        st.write("**Hacker tấn công (Brute-force):**")
+        st.write("Hacker quét toàn bộ không gian hạt giống từ 1000 đến 9999 để tính ngược ra d.")
+        
+        if 'weak_wallet' in st.session_state:
+            target_Q = st.session_state.weak_wallet[1]
+            if st.button("Bắt đầu Vét cạn (Brute-force)"):
+                progress_text = "Đang quét các khả năng..."
+                my_bar = st.progress(0, text=progress_text)
+                
+                start_time = time.time()
+                found = False
+                
+                # Hacker thử tất cả các hạt giống (seed) có thể
+                for guess in range(1000, 10000):
+                    # Cập nhật thanh tiến trình (chỉ cập nhật mỗi 500 bước để UI không giật)
+                    if guess % 500 == 0:
+                        my_bar.progress((guess - 1000) / 9000, text=f"Đang thử PIN: {guess}")
+                        
+                    random.seed(guess)
+                    d_guess = random.randint(1, N - 1)
+                    Q_guess = scalar_mult(d_guess, G)
+                    
+                    # Nếu Khóa công khai sinh ra khớp với mục tiêu -> Đã tìm ra seed!
+                    if Q_guess and Q_guess[0] == target_Q[0]:
+                        found = True
+                        random.seed() # Reset seed
+                        my_bar.progress(1.0, text="Hoàn thành!")
+                        end_time = time.time()
+                        
+                        st.success(f"TẤN CÔNG THÀNH CÔNG! Mất {round(end_time - start_time, 2)} giây.")
+                        st.warning(f"Đoán trúng mầm sinh số (seed): `{guess}`")
+                        st.error(f"Khôi phục được Khóa bí mật d: `{d_guess}`")
+                        
+                        # So sánh với khóa thực tế nạn nhân đang giấu
+                        if d_guess == st.session_state.weak_wallet[0]:
+                            st.balloons()
+                        break
+                
+                if not found:
+                    random.seed()
+                    st.error("Không tìm thấy! Không gian mẫu có thể lớn hơn dự kiến.")
 
 # ---------------------------------------------------------
-# KỊCH BẢN 3: TÁI SỬ DỤNG K
+# KỊCH BẢN 4: TÁI SỬ DỤNG K
 # ---------------------------------------------------------
-elif mode == "3. Lỗ hổng Tái sử dụng k":
-    st.subheader("Kịch bản 2: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
+elif mode == "4. Lỗ hổng Tái sử dụng k":
+    st.subheader("Kịch bản 4: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
     st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
     
     col_a, col_b = st.columns(2)
@@ -206,10 +275,10 @@ elif mode == "3. Lỗ hổng Tái sử dụng k":
                     st.balloons()
 
 # ---------------------------------------------------------
-# KỊCH BẢN 4: RFC 6979
+# KỊCH BẢN 5: RFC 6979
 # ---------------------------------------------------------
-elif mode == "4. Giải pháp An toàn (RFC 6979)":
-    st.subheader("Kịch bản 4: Chữ ký số tất định (RFC 6979)")
+elif mode == "5. Giải pháp An toàn (RFC 6979)":
+    st.subheader("Kịch bản 5: Chữ ký số tất định (RFC 6979)")
     st.info("Giá trị k được sinh ra từ HMAC(d, z), đảm bảo k luôn duy nhất và bí mật.")
     
     msg = st.text_input("Nhập nội dung:", "Dữ liệu an toàn")
@@ -223,3 +292,4 @@ elif mode == "4. Giải pháp An toàn (RFC 6979)":
         st.success(f"k được tạo ra một cách an toàn: `{hex(k_rfc)[:20]}...`")
         st.write(f"Chữ ký r: `{r}`")
         st.write("Vì k thay đổi theo mã băm của mỗi thông điệp, hacker không thể áp dụng các kịch bản tấn công trên.")
+
