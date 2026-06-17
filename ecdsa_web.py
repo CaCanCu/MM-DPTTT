@@ -4,9 +4,7 @@ import hmac
 import random 
 import time
 
-# ==========================================
 # 1. THAM SỐ ĐƯỜNG CONG (secp256k1)
-# ==========================================
 P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
 N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
 A = 0
@@ -14,9 +12,8 @@ B = 7
 G = (0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
      0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8)
 
-# ==========================================
 # 2. TOÁN HỌC NỀN TẢNG
-# ==========================================
+
 def inv_mod(k, p):
     return pow(k, -1, p)
 
@@ -47,9 +44,8 @@ def hash_msg(msg):
     h = hashlib.sha256(msg.encode('utf-8')).hexdigest()
     return int(h, 16)
 
-# ==========================================
 # 3. NGHIỆP VỤ ECDSA & TẤN CÔNG
-# ==========================================
+
 def sign_ecdsa(msg, d, k):
     z = hash_msg(msg)
     P1 = scalar_mult(k, G)
@@ -76,9 +72,8 @@ def hack_leaked_k(z, r, s, k_leaked):
     d_hacked = (inv_mod(r, N) * (s * k_leaked - z)) % N
     return d_hacked
 
-# ==========================================
 # 4. GIAO DIỆN WEB STREAMLIT
-# ==========================================
+
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
 st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
@@ -86,11 +81,10 @@ st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
     #st.session_state.alice_d = random.randint(1, N - 1)
 #alice_Q = scalar_mult(st.session_state.alice_d, G)
 
-# --- ĐOẠN CODE MỚI THÊM VÀO ---
 st.sidebar.markdown("---")
 st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
-# Tạo ô nhập liệu cho d (dùng text_input để hỗ trợ số cực lớn)
-user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="12345")
+# Tạo ô nhập liệu cho d 
+user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
 
 try:
     # Chuyển đổi chuỗi người dùng nhập thành số nguyên
@@ -101,10 +95,10 @@ try:
         st.session_state.alice_d = custom_d
     else:
         st.sidebar.error(f"Lỗi: d phải lớn hơn 0 và nhỏ hơn N!")
-        st.session_state.alice_d = 12345 # Giá trị mặc định nếu nhập sai
+        st.session_state.alice_d = 2023169324 # Giá trị mặc định nếu nhập sai
 except ValueError:
     st.sidebar.error("Lỗi: Vui lòng chỉ nhập số nguyên!")
-    st.session_state.alice_d = 12345
+    st.session_state.alice_d = 2023169324
 
 # Tính toán Khóa công khai Q dựa trên d bạn vừa nhập
 alice_Q = scalar_mult(st.session_state.alice_d, G)
@@ -122,9 +116,8 @@ st.sidebar.markdown("---")
 st.sidebar.write("**Khóa công khai (Q = dG):**")
 st.sidebar.code(f"{hex(alice_Q[0])[:20]}...")
 
-# ---------------------------------------------------------
 # KỊCH BẢN 1: ECDSA CHUẨN
-# ---------------------------------------------------------
+
 if mode == "1. Mô phỏng ECDSA chuẩn":
     st.subheader("Kịch bản 1: Hoạt động ECDSA tiêu chuẩn")
     st.info("Trong kịch bản này, mỗi thông điệp được ký với một số ngẫu nhiên k khác nhau.")
@@ -149,9 +142,8 @@ if mode == "1. Mô phỏng ECDSA chuẩn":
             else:
                 st.error("Xác minh thất bại!")
 
-# ---------------------------------------------------------
 # KỊCH BẢN 2: LỘ K
-# ---------------------------------------------------------
+
 elif mode == "2. Tấn công khi Lộ k":
     st.subheader("Kịch bản 2: Tấn công khi lộ k")
     st.markdown("""
@@ -175,9 +167,8 @@ elif mode == "2. Tấn công khi Lộ k":
         if d_hacked == st.session_state.alice_d:
             st.error("TẤN CÔNG THÀNH CÔNG!")
 
-# ---------------------------------------------------------
 # KỊCH BẢN 3: TÁI SỬ DỤNG K
-# ---------------------------------------------------------
+
 elif mode == "3. Lỗ hổng Tái sử dụng k":
     st.subheader("Kịch bản 3: Lỗ hổng Tái sử dụng k (Nonce Reuse)")
     st.warning("Hacker bắt được 2 giao dịch có cùng giá trị r.")
@@ -186,7 +177,7 @@ elif mode == "3. Lỗ hổng Tái sử dụng k":
     with col_a:
         msg1 = st.text_input("Thông điệp 1:", "Anh gửi Chanh 100k VND")
         msg2 = st.text_input("Thông điệp 2:", "Anh gửi Danh 200k VND")
-        bad_k = 998877665544 # Dùng chung k
+        bad_k = 123456789
         
         if st.button("Ký 2 giao dịch với cùng k"):
             z1, r1, s1 = sign_ecdsa(msg1, st.session_state.alice_d, bad_k)
@@ -205,9 +196,9 @@ elif mode == "3. Lỗ hổng Tái sử dụng k":
                 st.success(f"Tìm lại được d: `{d_h}`")
                 if d_h == st.session_state.alice_d:
                     st.balloons()
-# ---------------------------------------------------------
+
 # KỊCH BẢN 4: KHÓA BÍ MẬT YẾU (WEAK PRNG)
-# ---------------------------------------------------------
+
 elif mode == "4. Sinh d yếu (Weak PRNG)":
     st.subheader("Kịch bản 4: Tấn công vét cạn do sinh khóa yếu")
     st.info("Mô phỏng việc phần mềm ví sử dụng bộ sinh số giả ngẫu nhiên yếu kém (lấy một mã PIN 4 số làm mầm/seed) để tạo Khóa bí mật.")
@@ -274,9 +265,8 @@ elif mode == "4. Sinh d yếu (Weak PRNG)":
                     random.seed()
                     st.error("Không tìm thấy! Không gian mẫu có thể lớn hơn dự kiến.")
 
-# ---------------------------------------------------------
 # KỊCH BẢN 5: RFC 6979
-# ---------------------------------------------------------
+
 elif mode == "5. Giải pháp An toàn (RFC 6979)":
     st.subheader("Kịch bản 5: Chữ ký số tất định (RFC 6979)")
     st.info("Giá trị k được sinh ra từ HMAC(d, z), đảm bảo k luôn duy nhất và bí mật.")
