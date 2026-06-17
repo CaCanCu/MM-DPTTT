@@ -120,10 +120,10 @@ def hack_leaked_k(z, r, s, k_leaked):
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
 st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
-#if 'alice_d' not in st.session_state:
-    #st.session_state.alice_d = random.randint(1, N - 1)
+if 'alice_d' not in st.session_state:
+    st.session_state.alice_d = random.randint(1, N - 1)
 
-st.sidebar.markdown("---")
+'''st.sidebar.markdown("---")
 st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
 # Tạo ô nhập liệu cho d 
 user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
@@ -141,7 +141,7 @@ try:
 except ValueError:
     st.sidebar.error("Lỗi: Vui lòng chỉ nhập số nguyên!")
     st.session_state.alice_d = 2023169324
-
+'''
 # Tính toán Khóa công khai Q dựa trên d bạn vừa nhập
 alice_Q = scalar_mult(st.session_state.alice_d, G)
 
