@@ -120,27 +120,27 @@ def hack_leaked_k(z, r, s, k_leaked):
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
 st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
-if 'alice_d' not in st.session_state:
-    st.session_state.alice_d = random.randint(1, N - 1)
+# if 'alice_d' not in st.session_state:
+#     st.session_state.alice_d = random.randint(1, N - 1)
 
-# st.sidebar.markdown("---")
-# st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
-# # Tạo ô nhập liệu cho d 
-# user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
+st.sidebar.markdown("---")
+st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
+# Tạo ô nhập liệu cho d 
+user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
 
-# try:
-#     # Chuyển đổi chuỗi người dùng nhập thành số nguyên
-#     custom_d = int(user_input_d)
+try:
+    # Chuyển đổi chuỗi người dùng nhập thành số nguyên
+    custom_d = int(user_input_d)
     
-#     # Kiểm tra điều kiện bắt buộc của ECDSA: 0 < d < N
-#     if 0 < custom_d < N:
-#         st.session_state.alice_d = custom_d
-#     else:
-#         st.sidebar.error(f"Lỗi: d phải lớn hơn 0 và nhỏ hơn N!")
-#         st.session_state.alice_d = 2023169324 # Giá trị mặc định nếu nhập sai
-# except ValueError:
-#     st.sidebar.error("Lỗi: Vui lòng chỉ nhập số nguyên!")
-#     st.session_state.alice_d = 2023169324
+    # Kiểm tra điều kiện bắt buộc của ECDSA: 0 < d < N
+    if 0 < custom_d < N:
+        st.session_state.alice_d = custom_d
+    else:
+        st.sidebar.error(f"Lỗi: d phải lớn hơn 0 và nhỏ hơn N!")
+        st.session_state.alice_d = 2023169324 # Giá trị mặc định nếu nhập sai
+except ValueError:
+    st.sidebar.error("Lỗi: Vui lòng chỉ nhập số nguyên!")
+    st.session_state.alice_d = 2023169324
 
 # Tính toán Khóa công khai Q dựa trên d bạn vừa nhập
 alice_Q = scalar_mult(st.session_state.alice_d, G)
