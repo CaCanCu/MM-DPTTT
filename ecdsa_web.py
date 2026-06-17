@@ -1,77 +1,123 @@
-import streamlit as st
-import hashlib
-import hmac
-import random 
-import time
+import streamlit as st  # Giao diện Web UI
+import hashlib          # Băm mật mã (SHA-256)
+import hmac             # Tạo mã xác thực thông điệp (RFC 6979)
+import random           # Sinh số ngẫu nhiên môi trường (PRNG)
+import time             # Thư viện xử lý thời gian (đo thời gian Brute-force)
+
 
 # 1. THAM SỐ ĐƯỜNG CONG (secp256k1)
+
+# P là số nguyên tố xác định kích thước của trường hữu hạn (Prime field)
 P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+# N là bậc của Điểm cơ sở G (tổng số điểm tạo thành Nhóm Abel)
 N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+# A và B là hằng số của phương trình đường cong y^2 = x^3 + Ax + B mod P
 A = 0
 B = 7
+# G là Điểm cơ sở (Generator point), chứa tọa độ (x, y) công khai
 G = (0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
      0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8)
 
+# ==========================================
 # 2. TOÁN HỌC NỀN TẢNG
+# ==========================================
 
 def inv_mod(k, p):
+    # Dùng hàm pow() của lớp C bên dưới Python để tìm nghịch đảo modulo.
+    # pow(k, -1, p) tương đương với việc giải k*x ≡ 1 (mod p) bằng thuật toán Euclid mở rộng.
     return pow(k, -1, p)
 
 def add_points(p1, p2):
-    if p1 is None: return p2
-    if p2 is None: return p1
+    # Phép cộng hai điểm trên đường cong Elliptic
+    if p1 is None: return p2  # Nếu p1 là Điểm vô cực (None), kết quả là p2
+    if p2 is None: return p1  # Nếu p2 là Điểm vô cực (None), kết quả là p1
+    
     x1, y1 = p1
     x2, y2 = p2
+    
+    # Nếu x giống nhau nhưng y đối nghịch nhau -> Điểm vô cực (None)
     if x1 == x2 and y1 != y2: return None
+    
+    # Tính hệ số góc m của đường thẳng
     if x1 == x2:
+        # Trường hợp P1 trùng P2 -> Đây là phép NHÂN ĐÔI ĐIỂM (Point Doubling).
+        # Đạo hàm của đường cong (kẻ tiếp tuyến): m = (3*x1^2 + A) / (2*y1) mod P
         m = (3 * x1**2 + A) * inv_mod(2 * y1, P) % P
     else:
+        # Trường hợp P1 khác P2 -> Đây là phép CỘNG ĐIỂM BÌNH THƯỜNG (Point Addition).
+        # Hệ số góc cát tuyến: m = (y2 - y1) / (x2 - x1) mod P
         m = (y2 - y1) * inv_mod(x2 - x1, P) % P
+        
+    # Tính tọa độ điểm thứ 3 (giao điểm) rồi lấy đối xứng qua trục hoành
     x3 = (m**2 - x1 - x2) % P
     y3 = (m * (x1 - x3) - y1) % P
     return (x3, y3)
 
 def scalar_mult(k, point):
+    # Phép nhân vô hướng k*P áp dụng thuật toán Double-and-Add (độ phức tạp O(log k))
     res = None
     temp = point
     while k:
+        # Kiểm tra bit cuối cùng. Nếu là 1, cộng dồn điểm temp vào biến kết quả (Add)
         if k & 1: res = add_points(res, temp)
+        # Bất chấp bit là gì, luôn nhân đôi điểm temp cho vòng lặp tiếp theo (Double)
         temp = add_points(temp, temp)
+        # Dịch phải 1 bit (tương đương k = k // 2) để duyệt bit tiếp theo
         k >>= 1
     return res
 
 def hash_msg(msg):
+    # Băm thông điệp nguyên bản (string) thành chuỗi băm SHA-256 (hex)
     h = hashlib.sha256(msg.encode('utf-8')).hexdigest()
+    # Chuyển chuỗi hex thành số nguyên lớn cơ số 16 để tính toán đại số
     return int(h, 16)
 
+# ==========================================
 # 3. NGHIỆP VỤ ECDSA & TẤN CÔNG
+# ==========================================
 
 def sign_ecdsa(msg, d, k):
+    # Bước 1: Băm thông điệp lấy z
     z = hash_msg(msg)
+    # Bước 2: Sinh điểm P1 = k*G
     P1 = scalar_mult(k, G)
+    # Bước 3: Hoành độ r = P1.x mod N
     r = P1[0] % N
+    # Bước 4: Chữ ký s = k^-1 * (z + r*d) mod N
     s = (inv_mod(k, N) * (z + r * d)) % N
     return z, r, s
 
 def verify_ecdsa(msg, r, s, Q):
+    # Kiểm tra tính hợp lệ cơ bản: r và s phải nằm trong khoảng (0, N)
     if not (0 < r < N and 0 < s < N): return False
+    
     z = hash_msg(msg)
+    # Tính w = s^-1 mod N
     w = inv_mod(s, N)
+    # Tính hệ số u1 = z*w mod N
     u1 = (z * w) % N
+    # Tính hệ số u2 = r*w mod N
     u2 = (r * w) % N
+    
+    # Phục hồi điểm p_check = (u1*G) + (u2*Q)
     p_check = add_points(scalar_mult(u1, G), scalar_mult(u2, Q))
+    
+    # Xác minh thành công nếu p_check không phải vô cực và hoành độ khớp với r
     return p_check is not None and (p_check[0] % N) == r
 
 def hack_k_reuse(z1, z2, r, s1, s2):
+    # Giải thuật tấn công lặp Nonce (O(1))
+    # Tính k = (z1 - z2) * (s1 - s2)^-1 mod N
     k_hacked = ((z1 - z2) * inv_mod((s1 - s2) % N, N)) % N
+    # Tính d = r^-1 * (s1*k - z1) mod N
     d_hacked = (inv_mod(r, N) * (s1 * k_hacked - z1)) % N
     return k_hacked, d_hacked
 
 def hack_leaked_k(z, r, s, k_leaked):
-    # d = r^-1 * (sk - z) mod n
+    # Giải thuật tấn công lộ Nonce (O(1))
+    # Tính d = r^-1 * (s*k - z) mod N
     d_hacked = (inv_mod(r, N) * (s * k_leaked - z)) % N
     return d_hacked
-
 # 4. GIAO DIỆN WEB STREAMLIT
 
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
@@ -102,7 +148,6 @@ except ValueError:
 
 # Tính toán Khóa công khai Q dựa trên d bạn vừa nhập
 alice_Q = scalar_mult(st.session_state.alice_d, G)
-# ------------------------------
 
 st.sidebar.header(" Cấu hình")
 mode = st.sidebar.radio("Chọn kịch bản thực nghiệm:", 
