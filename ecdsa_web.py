@@ -18,9 +18,7 @@ B = 7
 G = (0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
      0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8)
 
-# ==========================================
 # 2. TOÁN HỌC NỀN TẢNG
-# ==========================================
 
 def inv_mod(k, p):
     # Dùng hàm pow() của lớp C bên dưới Python để tìm nghịch đảo modulo.
@@ -72,9 +70,7 @@ def hash_msg(msg):
     # Chuyển chuỗi hex thành số nguyên lớn cơ số 16 để tính toán đại số
     return int(h, 16)
 
-# ==========================================
 # 3. NGHIỆP VỤ ECDSA & TẤN CÔNG
-# ==========================================
 
 def sign_ecdsa(msg, d, k):
     # Bước 1: Băm thông điệp lấy z
@@ -118,19 +114,19 @@ def hack_leaked_k(z, r, s, k_leaked):
     # Tính d = r^-1 * (s*k - z) mod N
     d_hacked = (inv_mod(r, N) * (s * k_leaked - z)) % N
     return d_hacked
+     
 # 4. GIAO DIỆN WEB STREAMLIT
 
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
 st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
-#if 'alice_d' not in st.session_state:
-    #st.session_state.alice_d = random.randint(1, N - 1)
-#alice_Q = scalar_mult(st.session_state.alice_d, G)
+if 'alice_d' not in st.session_state:
+    st.session_state.alice_d = random.randint(1, N - 1)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
 # Tạo ô nhập liệu cho d 
-user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
+#user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
 
 try:
     # Chuyển đổi chuỗi người dùng nhập thành số nguyên
