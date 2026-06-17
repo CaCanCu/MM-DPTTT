@@ -120,13 +120,13 @@ def hack_leaked_k(z, r, s, k_leaked):
 st.set_page_config(page_title="ECDSA Simulator Pro", layout="wide")
 st.title("Hệ thống Phân tích An toàn Chữ ký số ECDSA")
 
-if 'alice_d' not in st.session_state:
-    st.session_state.alice_d = random.randint(1, N - 1)
+#if 'alice_d' not in st.session_state:
+    #st.session_state.alice_d = random.randint(1, N - 1)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Tùy chỉnh Khóa bí mật")
 # Tạo ô nhập liệu cho d 
-#user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
+user_input_d = st.sidebar.text_input("Nhập giá trị d của bạn:", value="2023169324")
 
 try:
     # Chuyển đổi chuỗi người dùng nhập thành số nguyên
